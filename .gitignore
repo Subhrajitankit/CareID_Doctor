@@ -47,3 +47,4 @@ app.*.map.json
 # Root debug screenshots & dumps
 /*.png
 /*.xml
+scratch/
