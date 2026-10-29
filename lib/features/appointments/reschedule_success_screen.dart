@@ -1110,7 +1110,7 @@ class RescheduleSuccessScreen extends StatelessWidget {
           onTap: () {
             Navigator.pushNamed(
               context,
-              AppRoutes.appointmentDetails,
+              AppRoutes.reviewReschedule,
               arguments: apt,
             );
           },
