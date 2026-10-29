@@ -213,9 +213,13 @@ class CameraPermissionScreen extends StatelessWidget {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(9999),
                             onTap: () {
+                              final args = ModalRoute.of(
+                                context,
+                              )?.settings.arguments;
                               Navigator.pushNamed(
                                 context,
                                 AppRoutes.qrProcessing,
+                                arguments: args,
                               );
                             },
                             child: const Center(

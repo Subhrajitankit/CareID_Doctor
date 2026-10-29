@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
@@ -8,11 +9,21 @@ import '../../core/widgets/app_bottom_nav.dart';
 class QrProcessingScreen extends StatefulWidget {
   final Duration processingDuration;
   final bool autoNavigate;
+  final Future<dynamic> Function()? onProcess;
+  final String? qrData;
+  final bool? shouldFail;
+  final String? failureTitle;
+  final String? failureMessage;
 
   const QrProcessingScreen({
     super.key,
     this.processingDuration = const Duration(milliseconds: 1600),
     this.autoNavigate = true,
+    this.onProcess,
+    this.qrData,
+    this.shouldFail,
+    this.failureTitle,
+    this.failureMessage,
   });
 
   @override
@@ -20,18 +31,138 @@ class QrProcessingScreen extends StatefulWidget {
 }
 
 class _QrProcessingScreenState extends State<QrProcessingScreen> {
+  bool _hasStarted = false;
+  bool _hasNavigated = false;
+  Timer? _timer;
+
   @override
-  void initState() {
-    super.initState();
-    if (widget.autoNavigate) {
-      Future.delayed(widget.processingDuration, () {
-        if (mounted) {
-          Navigator.pushReplacementNamed(
-            context,
-            AppRoutes.qrVerificationSuccess,
-          );
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _waitDuration(Duration duration) {
+    final completer = Completer<void>();
+    _timer = Timer(duration, () {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+    return completer.future;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasStarted && widget.autoNavigate) {
+      _hasStarted = true;
+      _startProcessing();
+    }
+  }
+
+  Future<void> _startProcessing() async {
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    // As required by the QR error workflow:
+    // When the relevant processing step finishes with an error (or in the default QR Error flow),
+    // navigate to the QR Error screen.
+    bool shouldFail = widget.shouldFail ?? true;
+    String? failureTitle = widget.failureTitle;
+    String? failureMessage = widget.failureMessage;
+    String? qrData = widget.qrData;
+    Future<dynamic> Function()? processFn = widget.onProcess;
+
+    if (args is Map) {
+      if (args['isSuccess'] == true || args['shouldFail'] == false) {
+        shouldFail = false;
+      } else if (args['shouldFail'] == true || args['isError'] == true) {
+        shouldFail = true;
+      }
+      if (args['title'] is String) {
+        failureTitle = args['title'] as String;
+      }
+      if (args['message'] is String) {
+        failureMessage = args['message'] as String;
+      }
+      if (args['qrData'] is String) {
+        qrData = args['qrData'] as String;
+      }
+      if (args['onProcess'] is Future<dynamic> Function()) {
+        processFn = args['onProcess'] as Future<dynamic> Function();
+      }
+    } else if (args is String) {
+      qrData = args;
+    } else if (args is bool) {
+      shouldFail = args;
+    }
+
+    if (qrData != null) {
+      final trimmed = qrData.trim().toLowerCase();
+      if (trimmed.isEmpty ||
+          trimmed.contains('invalid') ||
+          trimmed.contains('expired') ||
+          trimmed.contains('error') ||
+          trimmed.contains('fail') ||
+          trimmed.contains('reject')) {
+        shouldFail = true;
+        if (trimmed.contains('expired')) {
+          failureTitle ??= 'QR Code Expired';
+          failureMessage ??=
+              'This code is no longer valid or not\nrecognized by the system.';
+        } else if (trimmed.contains('invalid') || trimmed.isEmpty) {
+          failureTitle ??= 'Invalid QR Code';
+          failureMessage ??=
+              'The scanned QR code is malformed or not recognized by CareID.';
         }
-      });
+      }
+    }
+
+    dynamic processResult;
+    bool executionFailed = false;
+    dynamic executionError;
+
+    if (processFn != null) {
+      try {
+        final processFuture = processFn();
+        final delayFuture = _waitDuration(widget.processingDuration);
+        processResult = await processFuture;
+        await delayFuture;
+        if (processResult == false) {
+          executionFailed = true;
+        } else {
+          shouldFail = false;
+        }
+      } catch (e) {
+        executionFailed = true;
+        executionError = e;
+      }
+    } else {
+      await _waitDuration(widget.processingDuration);
+    }
+
+    if (!mounted || _hasNavigated) return;
+
+    if (shouldFail || executionFailed) {
+      _hasNavigated = true;
+      final String errTitle = failureTitle ?? 'QR Code Expired';
+      final String errMessage =
+          failureMessage ??
+          (executionError != null
+              ? executionError.toString().replaceFirst('Exception: ', '')
+              : 'This code is no longer valid or not\nrecognized by the system.');
+
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.qrError,
+        arguments: {'title': errTitle, 'message': errMessage},
+      );
+    } else {
+      _hasNavigated = true;
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.qrVerificationSuccess,
+        arguments: processResult,
+      );
     }
   }
 
