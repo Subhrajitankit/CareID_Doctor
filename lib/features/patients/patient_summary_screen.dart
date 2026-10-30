@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
+import '../../data/mock_data.dart';
 import '../../data/models/clinical_models.dart';
 
 /// Exact implementation of Figma Node 10:1346
@@ -47,12 +48,46 @@ class _PatientSummaryScreenState extends State<PatientSummaryScreen> {
     return 'assets/images/patient_eleanor_summary.png';
   }
 
+  Patient _resolvePatient(BuildContext context) {
+    if (widget.patientArg != null) return widget.patientArg!;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Patient) {
+      return args;
+    } else if (args is String) {
+      try {
+        return MockData.patients.firstWhere(
+          (p) =>
+              p.id.toLowerCase() == args.toLowerCase() ||
+              p.careId.toLowerCase() == args.toLowerCase() ||
+              p.name.toLowerCase() == args.toLowerCase(),
+          orElse: () => _defaultEleanorPatient,
+        );
+      } catch (_) {
+        return _defaultEleanorPatient;
+      }
+    } else if (args is Map) {
+      if (args['patient'] is Patient) {
+        return args['patient'] as Patient;
+      } else if (args['id'] is String) {
+        final id = args['id'] as String;
+        try {
+          return MockData.patients.firstWhere(
+            (p) =>
+                p.id.toLowerCase() == id.toLowerCase() ||
+                p.careId.toLowerCase() == id.toLowerCase(),
+            orElse: () => _defaultEleanorPatient,
+          );
+        } catch (_) {
+          return _defaultEleanorPatient;
+        }
+      }
+    }
+    return _defaultEleanorPatient;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final patient =
-        widget.patientArg ??
-        (ModalRoute.of(context)?.settings.arguments as Patient?) ??
-        _defaultEleanorPatient;
+    final patient = _resolvePatient(context);
 
     final allergies = patient.allergies.isNotEmpty
         ? patient.allergies

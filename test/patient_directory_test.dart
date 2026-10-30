@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:careid_doctor/core/routes/app_routes.dart';
 import 'package:careid_doctor/features/patients/patient_directory_screen.dart';
+import 'package:careid_doctor/features/patients/patient_summary_screen.dart';
 import 'package:careid_doctor/data/models/clinical_models.dart';
 
 void main() {
@@ -52,11 +53,17 @@ void main() {
     ),
   ];
 
-  Widget createTestWidget({List<Patient>? patients}) {
+  Widget createTestWidget({
+    List<Patient>? patients,
+    bool useRealSummary = false,
+  }) {
     return MaterialApp(
       routes: {
         AppRoutes.patientDirectory: (context) =>
             PatientDirectoryScreen(customPatients: patients),
+        AppRoutes.patientSummary: (context) => useRealSummary
+            ? const PatientSummaryScreen()
+            : const Scaffold(body: Text('Patient Summary Screen')),
         AppRoutes.patientProfile: (context) =>
             const Scaffold(body: Text('Patient Profile Screen')),
         AppRoutes.doctorProfile: (context) =>
@@ -125,6 +132,7 @@ void main() {
       expect(find.text('Pending Verification'), findsOneWidget);
       expect(find.text('Vitals'), findsOneWidget);
       expect(find.text('View History'), findsNWidgets(3));
+      expect(find.text('Patient Records'), findsNWidgets(4));
 
       // Bottom Navigation
       expect(find.text('Home'), findsOneWidget);
@@ -277,6 +285,89 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Doctor Profile Screen'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Tapping Patient Records action navigates to Patient Summary with selected patient',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestWidget(patients: testPatients));
+      await tester.pumpAndSettle();
+
+      // Tap Patient Records for Aditi Sharma (Patient A)
+      await tester.tap(find.byKey(const Key('patient_records_p-aditi')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Patient Summary Screen'), findsOneWidget);
+
+      // Return back to directory
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      // Tap Patient Records for Benjamin Wright (Patient B)
+      await tester.tap(find.byKey(const Key('patient_records_p-benjamin')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Patient Summary Screen'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'End-to-End: Tapping Patient Records opens Patient Summary displaying selected patient info',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        createTestWidget(patients: testPatients, useRealSummary: true),
+      );
+      await tester.pumpAndSettle();
+
+      // 1. Tap Patient Records for Aditi Sharma
+      await tester.tap(find.byKey(const Key('patient_records_p-aditi')));
+      await tester.pumpAndSettle();
+
+      // Verify Patient Summary displays Aditi's data
+      expect(find.text('Aditi Sharma'), findsOneWidget);
+      expect(find.text('CR-ID: 8829-0012'), findsOneWidget);
+      expect(find.text('32 Years'), findsOneWidget);
+      expect(find.text('Female'), findsOneWidget);
+
+      // 2. Press back button
+      await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      await tester.pumpAndSettle();
+
+      // Verify returned to Patient Directory
+      expect(find.text('Patient Records (4)'), findsOneWidget);
+
+      // 3. Tap Patient Records for Benjamin Wright
+      await tester.tap(find.byKey(const Key('patient_records_p-benjamin')));
+      await tester.pumpAndSettle();
+
+      // Verify Patient Summary displays Benjamin's data
+      expect(find.text('Benjamin Wright'), findsOneWidget);
+      expect(find.text('CR-ID: 4410-9981'), findsOneWidget);
+      expect(find.text('68 Years'), findsOneWidget);
+      expect(find.text('Male'), findsOneWidget);
+
+      // 4. Press back button again
+      await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      await tester.pumpAndSettle();
+
+      // Verify back in Patient Directory
+      expect(find.text('Patient Records (4)'), findsOneWidget);
     },
   );
 }

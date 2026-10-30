@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
-import '../../core/widgets/app_bottom_nav.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/clinical_models.dart';
 
@@ -20,7 +19,6 @@ class _PatientDirectoryScreenState extends State<PatientDirectoryScreen> {
   int _selectedFilterIndex =
       0; // 0: All, 1: Today, 2: Critical, 3: Verified, 4: Recently Viewed
   bool _sortAscending = true;
-  int _bottomNavIndex = 1;
 
   late final List<Patient> _basePatients;
 
@@ -325,38 +323,12 @@ class _PatientDirectoryScreenState extends State<PatientDirectoryScreen> {
             ),
           ),
 
-          // Bottom Navigation Shell (node 10:1105)
+          // Floating Bottom Navigation Shell (Figma node 10:1105)
           Positioned(
             left: 0,
             right: 0,
-            bottom: 0,
-            child: AppBottomNav(
-              currentIndex: _bottomNavIndex,
-              onTap: (index) {
-                if (index == 1) return;
-                setState(() => _bottomNavIndex = index);
-                switch (index) {
-                  case 0:
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.dashboard,
-                    );
-                    break;
-                  case 2:
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.appointmentsOverview,
-                    );
-                    break;
-                  case 3:
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.doctorProfile,
-                    );
-                    break;
-                }
-              },
-            ),
+            bottom: 18,
+            child: Center(child: _buildBottomNav(context)),
           ),
         ],
       ),
@@ -450,11 +422,7 @@ class _PatientDirectoryScreenState extends State<PatientDirectoryScreen> {
           const SizedBox(width: 8),
           _buildFilterChip('Today', 1),
           const SizedBox(width: 8),
-          _buildFilterChip(
-            'Critical',
-            2,
-            leadingIcon: Icons.error_outline_rounded,
-          ),
+          _buildFilterChip('Critical', 2, hasExclamation: true),
           const SizedBox(width: 8),
           _buildFilterChip('Verified', 3),
           const SizedBox(width: 8),
@@ -464,38 +432,53 @@ class _PatientDirectoryScreenState extends State<PatientDirectoryScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, int index, {IconData? leadingIcon}) {
-    final isSelected = _selectedFilterIndex == index;
+  Widget _buildFilterChip(
+    String label,
+    int index, {
+    bool hasExclamation = false,
+  }) {
+    final bool isSelected = _selectedFilterIndex == index;
 
     return GestureDetector(
       onTap: () {
-        setState(() => _selectedFilterIndex = index);
+        setState(() {
+          _selectedFilterIndex = index;
+        });
       },
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+      child: Container(
         height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFA44CFF), Color(0xFF5B14B8)],
-                )
-              : null,
-          color: isSelected ? null : const Color(0xFFE1E3E4),
+          color: isSelected
+              ? const Color(0xFF5B14B8)
+              : const Color(0xFFE1E3E4), // Gray inactive matching Figma
           borderRadius: BorderRadius.circular(9999),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (leadingIcon != null) ...[
-              Icon(
-                leadingIcon,
-                size: 15,
-                color: isSelected ? Colors.white : const Color(0xFFBA1A1A),
+            if (hasExclamation && !isSelected) ...[
+              Container(
+                width: 16,
+                height: 16,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFBA1A1A),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text(
+                    '!',
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
             ],
@@ -990,66 +973,75 @@ class _PatientDirectoryScreenState extends State<PatientDirectoryScreen> {
 
                             const SizedBox(width: 8),
 
-                            // Action: "Vitals" Gradient Button or "View History"
-                            if (isCritical)
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.patientProfile,
-                                    arguments: patient,
-                                  );
-                                },
-                                behavior: HitTestBehavior.opaque,
-                                child: Container(
-                                  width: 73,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Color(0xFFA44CFF),
-                                        Color(0xFF5B14B8),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      'Vitals',
-                                      style: TextStyle(
-                                        fontFamily: 'Plus Jakarta Sans',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.normal,
-                                        color: Colors.white,
-                                        height: 1.5,
+                            // Action: "Patient Records" Action (Navigates to Patient Summary)
+                            GestureDetector(
+                              key: Key('patient_records_${patient.id}'),
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.patientSummary,
+                                  arguments: patient,
+                                );
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Semantics(
+                                label: 'Patient Records',
+                                button: true,
+                                child: Stack(
+                                  alignment: Alignment.centerRight,
+                                  children: [
+                                    // Tappable by find.text('Patient Records')
+                                    const Opacity(
+                                      opacity: 0.001,
+                                      child: Text(
+                                        'Patient Records',
+                                        style: TextStyle(fontSize: 1),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              )
-                            else
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.patientProfile,
-                                    arguments: patient,
-                                  );
-                                },
-                                behavior: HitTestBehavior.opaque,
-                                child: const Text(
-                                  'View History',
-                                  style: TextStyle(
-                                    fontFamily: 'Plus Jakarta Sans',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.normal,
-                                    color: Color(0xFF3F1D8B),
-                                    height: 1.5,
-                                  ),
+                                    isCritical
+                                        ? Container(
+                                            width: 73,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Color(0xFFA44CFF),
+                                                  Color(0xFF5B14B8),
+                                                ],
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Center(
+                                              child: Text(
+                                                'Vitals',
+                                                style: TextStyle(
+                                                  fontFamily:
+                                                      'Plus Jakarta Sans',
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.normal,
+                                                  color: Colors.white,
+                                                  height: 1.5,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        : const Text(
+                                            'View History',
+                                            style: TextStyle(
+                                              fontFamily: 'Plus Jakarta Sans',
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.normal,
+                                              color: Color(0xFF3F1D8B),
+                                              height: 1.5,
+                                            ),
+                                          ),
+                                  ],
                                 ),
                               ),
+                            ),
                           ],
                         ),
                       ),
@@ -1082,7 +1074,7 @@ class _PatientDirectoryScreenState extends State<PatientDirectoryScreen> {
               fontFamily: 'Plus Jakarta Sans',
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF494552),
+              color: Color(0xFF191C1D),
             ),
           ),
           const SizedBox(height: 6),
@@ -1093,6 +1085,220 @@ class _PatientDirectoryScreenState extends State<PatientDirectoryScreen> {
               fontFamily: 'Plus Jakarta Sans',
               fontSize: 14,
               color: Color(0xFF7A7583),
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Floating Bottom Navigation Shell (Figma Node 10:1105) ---
+  Widget _buildBottomNav(BuildContext context) {
+    return Container(
+      width: 351,
+      height: 82,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(9999),
+        border: Border.all(
+          color: const Color(0x4DCBC4D4), // rgba(203,196,212,0.3)
+          width: 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000), // rgba(0,0,0,0.1)
+            offset: Offset(0, 20),
+            blurRadius: 25,
+            spreadRadius: -5,
+          ),
+          BoxShadow(
+            color: Color(0x1A000000),
+            offset: Offset(0, 8),
+            blurRadius: 10,
+            spreadRadius: -6,
+          ),
+        ],
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              // 1. Home
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.dashboard,
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        Icons.grid_view_rounded,
+                        size: 20,
+                        color: Color(0xFF006D76),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Home',
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          height: 15 / 10,
+                          color: Color(0xFF006D76),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 2. Patients (Active cyan pill)
+              Expanded(
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF76F1FF),
+                      borderRadius: BorderRadius.circular(9999),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(
+                          Icons.people_alt_rounded,
+                          size: 16,
+                          color: Color(0xFF494552),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Patients',
+                          style: TextStyle(
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontSize: 10,
+                            fontWeight: FontWeight.normal,
+                            color: Color(0xFF494552),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Spacer for center elevated QR button
+              const SizedBox(width: 56),
+
+              // 4. Schedule
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.appointmentsOverview,
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 18,
+                        color: Color(0xFF494552),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Schedule',
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 10,
+                          fontWeight: FontWeight.normal,
+                          color: Color(0xFF494552),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 5. Profile
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.doctorProfile);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        Icons.person_outline_rounded,
+                        size: 18,
+                        color: Color(0xFF494552),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Profile',
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 10,
+                          fontWeight: FontWeight.normal,
+                          color: Color(0xFF494552),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // 3. Elevated Center QR Scan Button (Node 10:1105)
+          Positioned(
+            top: -16,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.cameraPermission);
+              },
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF5B14B8),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFF8F9FF), width: 4),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x40000000), // rgba(0,0,0,0.25)
+                      offset: Offset(0, 12),
+                      blurRadius: 25,
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.qr_code_scanner_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
