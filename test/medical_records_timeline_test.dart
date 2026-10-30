@@ -1,0 +1,214 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:careid_doctor/features/medical_records/medical_records_timeline_screen.dart';
+import 'package:careid_doctor/core/routes/app_routes.dart';
+import 'package:careid_doctor/data/mock_data.dart';
+import 'package:careid_doctor/data/models/clinical_models.dart';
+
+void main() {
+  Widget createTestWidget({
+    Patient? patientArg,
+    NavigatorObserver? observer,
+  }) {
+    return MaterialApp(
+      navigatorObservers: observer != null ? [observer] : [],
+      routes: {
+        AppRoutes.medicalRecords: (context) =>
+            MedicalRecordsTimelineScreen(patientArg: patientArg),
+        AppRoutes.medicalRecordDetails: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Record Details Page')),
+              body: const Text('Record Details Body'),
+            ),
+        AppRoutes.documentViewer: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Document Viewer Page')),
+              body: const Text('Document Viewer Body'),
+            ),
+        AppRoutes.dashboard: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Dashboard Page')),
+              body: const Text('Dashboard Body'),
+            ),
+        AppRoutes.patientDirectory: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Patient Directory Page')),
+              body: const Text('Patient Directory Body'),
+            ),
+        AppRoutes.cameraPermission: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Camera Permission Page')),
+              body: const Text('Camera Permission Body'),
+            ),
+        AppRoutes.appointmentsOverview: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Appointments Overview Page')),
+              body: const Text('Appointments Overview Body'),
+            ),
+        AppRoutes.doctorProfile: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Doctor Profile Page')),
+              body: const Text('Doctor Profile Body'),
+            ),
+      },
+      home: MedicalRecordsTimelineScreen(patientArg: patientArg),
+    );
+  }
+
+  group('MedicalRecordsTimelineScreen - Figma Node 10:1887 Verification', () {
+    testWidgets('renders all core UI elements matching Figma node 10:1887',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(427, 1328);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 1. Page Title "Health  Records" (Node 10:1923)
+      expect(find.text('Health  Records'), findsOneWidget);
+
+      // 2. Search Bar (Node 10:1924, 10:1928)
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text('Search records, labs, doctors...'), findsOneWidget);
+      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+
+      // 3. Filter Chips (Node 10:1932)
+      expect(find.text('All Records'), findsOneWidget);
+      expect(find.text('Medical'), findsOneWidget);
+      expect(find.text('Dental'), findsWidgets);
+      expect(find.text('Vision'), findsWidgets);
+      expect(find.text('Clinical Notes'), findsOneWidget);
+
+      // 4. Timeline Records & Cards
+      expect(find.text('Facility'), findsWidgets);
+      expect(find.text('Physician'), findsWidgets);
+      expect(find.text('Verified'), findsWidgets);
+
+      // 5. Floating Bottom Navigation Shell (Node 10:1888)
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Patients'), findsOneWidget);
+      expect(find.text('Schedule'), findsOneWidget);
+      expect(find.text('Profile'), findsOneWidget);
+      expect(find.byIcon(Icons.qr_code_scanner_rounded), findsOneWidget);
+    });
+
+    testWidgets('Filter chips switch and filter records list correctly',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(427, 1328);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Initially All Records are visible
+      expect(find.text(MockData.records.first.title), findsOneWidget);
+
+      // Ensure "Dental" chip is scrolled into view and tap it
+      final dentalChip = find.text('Dental').first;
+      await tester.ensureVisible(dentalChip);
+      await tester.pumpAndSettle();
+      await tester.tap(dentalChip);
+      await tester.pumpAndSettle();
+
+      // Only dental records should appear
+      expect(find.text('Annual Dental Panoramic X-Ray'), findsOneWidget);
+      expect(find.text('12-Lead Electrocardiogram (ECG)'), findsNothing);
+
+      // Tap "All Records" to reset
+      final allChip = find.text('All Records');
+      await tester.ensureVisible(allChip);
+      await tester.pumpAndSettle();
+      await tester.tap(allChip);
+      await tester.pumpAndSettle();
+
+      expect(find.text('12-Lead Electrocardiogram (ECG)'), findsOneWidget);
+    });
+
+    testWidgets('Search query filters records in real-time',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(427, 1328);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Enter search query
+      await tester.enterText(find.byType(TextField), 'Metabolic');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Comprehensive Metabolic Panel (CMP)'),
+        findsOneWidget,
+      );
+      expect(find.text('Annual Dental Panoramic X-Ray'), findsNothing);
+
+      // Clear search via cancel icon
+      await tester.tap(find.byIcon(Icons.cancel));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Annual Dental Panoramic X-Ray'), findsOneWidget);
+    });
+
+    testWidgets('Tapping record card navigates to medical record details',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(427, 1328);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Tap on the first record card
+      final firstRecordTitle = MockData.records.first.title;
+      await tester.tap(find.text(firstRecordTitle));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Record Details Page'), findsOneWidget);
+    });
+
+    testWidgets('Tapping PDF link navigates to document viewer',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(427, 1328);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Tap "View PDF Document"
+      await tester.tap(find.text('View PDF Document').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Document Viewer Page'), findsOneWidget);
+    });
+
+    testWidgets('Floating Bottom Navigation items navigate to designated routes',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(427, 1328);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Tap Schedule
+      await tester.tap(find.text('Schedule'));
+      await tester.pumpAndSettle();
+      expect(find.text('Appointments Overview Page'), findsOneWidget);
+    });
+  });
+}
