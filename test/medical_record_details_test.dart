@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:careid_doctor/features/medical_records/medical_record_details_screen.dart';
 import 'package:careid_doctor/features/medical_records/medical_records_timeline_screen.dart';
+import 'package:careid_doctor/features/medical_records/share_record_modal.dart';
 import 'package:careid_doctor/core/routes/app_routes.dart';
 import 'package:careid_doctor/data/mock_data.dart';
 import 'package:careid_doctor/data/models/clinical_models.dart';
@@ -166,14 +167,6 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      final oldHandler = FlutterError.onError;
-      FlutterError.onError = (FlutterErrorDetails details) {
-        // Suppress pre-existing layout warnings inside ShareRecordModal under Ahem test font
-      };
-      addTearDown(() {
-        FlutterError.onError = oldHandler;
-      });
-
       final testRecord = MockData.records.first;
       await tester.pumpWidget(createTestWidget(recordArg: testRecord));
       await tester.pumpAndSettle();
@@ -183,7 +176,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify share modal opened
-      expect(find.text('Encrypted Clinical Sharing'), findsOneWidget);
+      expect(find.byType(ShareRecordModal), findsOneWidget);
+      expect(find.text('Share Record'), findsOneWidget);
     });
 
     testWidgets(
