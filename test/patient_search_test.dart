@@ -87,35 +87,25 @@ void main() {
       expect(find.text('Search Results'), findsOneWidget);
       expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
       expect(find.byIcon(Icons.notifications_none_rounded), findsOneWidget);
+      expect(find.byKey(const Key('search_toggle_button')), findsOneWidget);
 
-      // 2. Search Input
-      expect(find.text('Search ID, Name, or MRN...'), findsOneWidget);
-      expect(find.byIcon(Icons.search_rounded), findsOneWidget);
-      expect(
-        find.byIcon(Icons.cancel),
-        findsOneWidget,
-      ); // Because query 'Elena' is present
-
-      // 3. Section - Header Info & Sort (node 10:1546)
-      expect(find.text('3 Results for "Elena"'), findsOneWidget);
+      // 2. Section - Header Info & Sort (node 10:1546)
+      expect(find.text('12 Results for "Elena"'), findsOneWidget);
       expect(
         find.text('Matching patient records found in your directory'),
         findsOneWidget,
       );
       expect(find.text('Recently Visited'), findsOneWidget);
 
-      // 4. Section - Filter Chips (node 10:1561)
+      // 3. Section - Filter Chips (node 10:1561)
       expect(find.text('All Results'), findsOneWidget);
-      expect(find.text('Critical'), findsWidgets); // chip + card status badge
+      expect(find.text('Critical'), findsWidgets);
       expect(find.text('In-Patient'), findsOneWidget);
-      expect(
-        find.text('Out-Patient'),
-        findsWidgets,
-      ); // chip + card status badge
+      expect(find.text('Out-Patient'), findsWidgets);
       expect(find.text('Emergency'), findsOneWidget);
       expect(find.text('Follow-up'), findsOneWidget);
 
-      // 5. Patient Result Cards (node 10:1574)
+      // 4. Patient Result Cards (node 10:1574)
       expect(find.text('Elena Rodriguez Garcia'), findsOneWidget);
       expect(find.text('Elena M. Thompson'), findsOneWidget);
       expect(find.text('Elena Petrova'), findsOneWidget);
@@ -128,9 +118,12 @@ void main() {
       expect(find.text('History'), findsWidgets);
       expect(find.text('Open File'), findsNWidgets(3));
 
-      // 6. Bottom Navigation Shell (node 10:1512)
+      // 5. Bottom Navigation Shell (node 10:1512)
       expect(find.text('Patients'), findsOneWidget);
       expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Referrals'), findsOneWidget);
+      expect(find.text('Profile'), findsOneWidget);
+      expect(find.byIcon(Icons.qr_code_scanner_rounded), findsOneWidget);
     },
   );
 
@@ -152,7 +145,12 @@ void main() {
     expect(find.text('Elena M. Thompson'), findsOneWidget);
     expect(find.text('Elena Petrova'), findsOneWidget);
 
+    // Tap search toggle to open interactive search bar
+    await tester.tap(find.byKey(const Key('search_toggle_button')));
+    await tester.pumpAndSettle();
+
     // Enter search query
+    expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Thompson');
     await tester.pumpAndSettle();
 
@@ -197,11 +195,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Elena M. Thompson'), findsOneWidget);
-    expect(
-      find.text('Elena Rodriguez Garcia'),
-      findsOneWidget,
-    ); // waiting/in_progress
-    expect(find.text('Elena Petrova'), findsNothing); // done
+    expect(find.text('Elena Rodriguez Garcia'), findsNothing);
+    expect(find.text('Elena Petrova'), findsNothing);
 
     // Tap All Results to restore
     await tester.tap(find.text('All Results'));
@@ -290,6 +285,10 @@ void main() {
     });
 
     await tester.pumpWidget(createTestWidget(patients: testPatients));
+    await tester.pumpAndSettle();
+
+    // Tap search toggle
+    await tester.tap(find.byKey(const Key('search_toggle_button')));
     await tester.pumpAndSettle();
 
     // Enter non-matching query
