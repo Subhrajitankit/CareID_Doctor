@@ -21,6 +21,7 @@ class MedicalRecordsTimelineScreen extends StatefulWidget {
 class _MedicalRecordsTimelineScreenState
     extends State<MedicalRecordsTimelineScreen> {
   int _selectedCategoryIndex = 0;
+  bool _isNavigating = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -191,12 +192,12 @@ class _MedicalRecordsTimelineScreenState
                             const SizedBox(height: 24),
 
                             // Filter Chips (Figma Node 10:1932)
-                            _buildFilterChips(),
+                            _buildFilterChips(patient),
 
                             const SizedBox(height: 20),
 
                             // Timeline Section (Figma Node 10:1943)
-                            _buildTimelineSection(records),
+                            _buildTimelineSection(records, patient),
                           ],
                         ),
                       ),
@@ -447,7 +448,7 @@ class _MedicalRecordsTimelineScreenState
   // Selected: #006971, text white
   // Unselected: #FFFFFF, border rgba(203,196,212,0.4), text #494552
   // ==========================================
-  Widget _buildFilterChips() {
+  Widget _buildFilterChips([Patient? patient]) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       clipBehavior: Clip.none,
@@ -460,7 +461,35 @@ class _MedicalRecordsTimelineScreenState
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  _selectedCategoryIndex = index;
+                  if (_categories[index] == 'Dental') {
+                    if (_isNavigating) return;
+                    _isNavigating = true;
+                    final targetPatient =
+                        patient ??
+                        (() {
+                          try {
+                            return MockData.patients.first;
+                          } catch (_) {
+                            return null;
+                          }
+                        })();
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.dentalRecords,
+                      arguments: {
+                        'patient': targetPatient,
+                        'patientId': targetPatient?.id,
+                      },
+                    ).then((_) {
+                      if (mounted) {
+                        setState(() {
+                          _isNavigating = false;
+                        });
+                      }
+                    });
+                  } else {
+                    _selectedCategoryIndex = index;
+                  }
                 });
               },
               behavior: HitTestBehavior.opaque,
@@ -512,7 +541,10 @@ class _MedicalRecordsTimelineScreenState
   // Vertical timeline line (Node 10:1944)
   // Record Items (Node 10:1945, 10:1983, 10:2021)
   // ==========================================
-  Widget _buildTimelineSection(List<MedicalRecordItem> records) {
+  Widget _buildTimelineSection(
+    List<MedicalRecordItem> records, [
+    Patient? patient,
+  ]) {
     if (records.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
@@ -569,6 +601,7 @@ class _MedicalRecordsTimelineScreenState
             record: record,
             isToday: isToday,
             isLast: isLast,
+            patient: patient,
           );
         },
       ),
@@ -581,6 +614,7 @@ class _MedicalRecordsTimelineScreenState
     required MedicalRecordItem record,
     required bool isToday,
     required bool isLast,
+    Patient? patient,
   }) {
     final categoryInfo = _getCategoryVisuals(record.category);
     final isArchived =
@@ -653,8 +687,28 @@ class _MedicalRecordsTimelineScreenState
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        AppRoutes.medicalRecordDetails,
-                        arguments: record,
+                        record.category.toLowerCase().contains('dental')
+                            ? AppRoutes.dentalRecords
+                            : AppRoutes.medicalRecordDetails,
+                        arguments:
+                            record.category.toLowerCase().contains('dental')
+                            ? {
+                                'patient':
+                                    patient ??
+                                    (() {
+                                      try {
+                                        return MockData.patients.firstWhere(
+                                          (p) => p.id == record.patientId,
+                                        );
+                                      } catch (_) {
+                                        return MockData.patients.first;
+                                      }
+                                    })(),
+                                'patientId': patient?.id ?? record.patientId,
+                                'record': record,
+                                'recordId': record.id,
+                              }
+                            : record,
                       );
                     },
                     behavior: HitTestBehavior.opaque,
