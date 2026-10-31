@@ -33,7 +33,7 @@ class _MedicalRecordsTimelineScreenState
     'Vision',
     'Clinical Notes',
     'Lab Reports',
-    'Pet',
+    'PET',
   ];
 
   @override
@@ -460,37 +460,90 @@ class _MedicalRecordsTimelineScreenState
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               onTap: () {
-                setState(() {
-                  if (_categories[index] == 'Dental') {
-                    if (_isNavigating) return;
-                    _isNavigating = true;
-                    final targetPatient =
-                        patient ??
-                        (() {
-                          try {
-                            return MockData.patients.first;
-                          } catch (_) {
-                            return null;
-                          }
-                        })();
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.dentalRecords,
-                      arguments: {
-                        'patient': targetPatient,
-                        'patientId': targetPatient?.id,
-                      },
-                    ).then((_) {
-                      if (mounted) {
-                        setState(() {
-                          _isNavigating = false;
-                        });
-                      }
-                    });
-                  } else {
+                final category = _categories[index];
+                if (category == 'Dental') {
+                  if (_isNavigating) return;
+                  _isNavigating = true;
+                  final targetPatient =
+                      patient ??
+                      (() {
+                        try {
+                          return MockData.patients.first;
+                        } catch (_) {
+                          return null;
+                        }
+                      })();
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.dentalRecords,
+                    arguments: {
+                      'patient': targetPatient,
+                      'patientId': targetPatient?.id,
+                    },
+                  ).then((_) {
+                    if (mounted) {
+                      setState(() {
+                        _isNavigating = false;
+                      });
+                    }
+                  });
+                } else if (category == 'Vision') {
+                  if (_isNavigating) return;
+                  _isNavigating = true;
+                  final targetPatient =
+                      patient ??
+                      (() {
+                        try {
+                          return MockData.patients.first;
+                        } catch (_) {
+                          return null;
+                        }
+                      })();
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.visionRecords,
+                    arguments: {
+                      'patient': targetPatient,
+                      'patientId': targetPatient?.id,
+                    },
+                  ).then((_) {
+                    if (mounted) {
+                      setState(() {
+                        _isNavigating = false;
+                      });
+                    }
+                  });
+                } else if (category.toUpperCase() == 'PET') {
+                  if (_isNavigating) return;
+                  _isNavigating = true;
+                  final targetPatient =
+                      patient ??
+                      (() {
+                        try {
+                          return MockData.patients.first;
+                        } catch (_) {
+                          return null;
+                        }
+                      })();
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.petRecords,
+                    arguments: {
+                      'patient': targetPatient,
+                      'patientId': targetPatient?.id,
+                    },
+                  ).then((_) {
+                    if (mounted) {
+                      setState(() {
+                        _isNavigating = false;
+                      });
+                    }
+                  });
+                } else {
+                  setState(() {
                     _selectedCategoryIndex = index;
-                  }
-                });
+                  });
+                }
               },
               behavior: HitTestBehavior.opaque,
               child: Container(
@@ -685,31 +738,50 @@ class _MedicalRecordsTimelineScreenState
                   // Record Card (Node 10:1949, 10:1987, 10:2025)
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        record.category.toLowerCase().contains('dental')
-                            ? AppRoutes.dentalRecords
-                            : AppRoutes.medicalRecordDetails,
-                        arguments:
-                            record.category.toLowerCase().contains('dental')
-                            ? {
-                                'patient':
-                                    patient ??
-                                    (() {
-                                      try {
-                                        return MockData.patients.firstWhere(
-                                          (p) => p.id == record.patientId,
-                                        );
-                                      } catch (_) {
-                                        return MockData.patients.first;
-                                      }
-                                    })(),
-                                'patientId': patient?.id ?? record.patientId,
-                                'record': record,
-                                'recordId': record.id,
-                              }
-                            : record,
-                      );
+                      final cat = record.category.toLowerCase();
+                      final targetPatient =
+                          patient ??
+                          (() {
+                            try {
+                              return MockData.patients.firstWhere(
+                                (p) => p.id == record.patientId,
+                              );
+                            } catch (_) {
+                              return MockData.patients.first;
+                            }
+                          })();
+                      final targetArgs = {
+                        'patient': targetPatient,
+                        'patientId': patient?.id ?? record.patientId,
+                        'record': record,
+                        'recordId': record.id,
+                      };
+
+                      if (cat.contains('dental')) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.dentalRecords,
+                          arguments: targetArgs,
+                        );
+                      } else if (cat.contains('vision')) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.visionRecords,
+                          arguments: targetArgs,
+                        );
+                      } else if (cat.contains('pet')) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.petRecords,
+                          arguments: targetArgs,
+                        );
+                      } else {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.medicalRecordDetails,
+                          arguments: record,
+                        );
+                      }
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Container(

@@ -22,6 +22,26 @@ void main() {
           ),
           body: const Text('Dental Records Body'),
         ),
+        AppRoutes.visionRecords: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Vision Records Screen'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          body: const Text('Vision Records Body'),
+        ),
+        AppRoutes.petRecords: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('PET Records Screen'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          body: const Text('PET Records Body'),
+        ),
         AppRoutes.medicalRecordDetails: (context) => Scaffold(
           appBar: AppBar(title: const Text('Record Details Page')),
           body: const Text('Record Details Body'),
@@ -83,6 +103,7 @@ void main() {
       expect(find.text('Dental'), findsWidgets);
       expect(find.text('Vision'), findsWidgets);
       expect(find.text('Clinical Notes'), findsOneWidget);
+      expect(find.text('PET'), findsWidgets);
 
       // 4. Timeline Records & Cards
       expect(find.text('Facility'), findsWidgets);
@@ -155,6 +176,64 @@ void main() {
 
         expect(find.text('Dental Records Screen'), findsOneWidget);
         expect(find.text('Dental Records Body'), findsOneWidget);
+
+        await tester.tap(find.byIcon(Icons.arrow_back));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Health  Records'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Tapping Vision category button navigates to Vision Records screen and supports back navigation',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(427, 1328);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        final visionButton = find.text('Vision').first;
+        await tester.ensureVisible(visionButton);
+        await tester.pumpAndSettle();
+        await tester.tap(visionButton);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Vision Records Screen'), findsOneWidget);
+        expect(find.text('Vision Records Body'), findsOneWidget);
+
+        await tester.tap(find.byIcon(Icons.arrow_back));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Health  Records'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Tapping PET category button navigates to PET Records screen and supports back navigation',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(427, 1328);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        final petButton = find.text('PET').first;
+        await tester.ensureVisible(petButton);
+        await tester.pumpAndSettle();
+        await tester.tap(petButton);
+        await tester.pumpAndSettle();
+
+        expect(find.text('PET Records Screen'), findsOneWidget);
+        expect(find.text('PET Records Body'), findsOneWidget);
 
         await tester.tap(find.byIcon(Icons.arrow_back));
         await tester.pumpAndSettle();
