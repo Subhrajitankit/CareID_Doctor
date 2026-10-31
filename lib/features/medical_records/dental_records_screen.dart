@@ -20,13 +20,15 @@ class _DentalRecordsScreenState extends State<DentalRecordsScreen> {
   int _selectedCategoryIndex = 2; // "Dental" is active (Node 10:7676)
   late final TextEditingController _searchController;
   late final FocusNode _searchFocusNode;
+  bool _isNavigating = false;
 
-  /// Categories matching Figma node 10:7669
+  /// Categories matching Figma node 10:7669 + PET category button
   final List<String> _categories = [
     'All Records',
     'Medical',
     'Dental',
     'Vision',
+    'PET',
     'Clinical Notes',
     'Lab Reports',
   ];
@@ -205,7 +207,7 @@ class _DentalRecordsScreenState extends State<DentalRecordsScreen> {
                             const SizedBox(height: 24),
 
                             // 4. Horizontal Category Chips (Figma Node 10:7669)
-                            _buildCategoryChips(),
+                            _buildCategoryChips(patient),
                             const SizedBox(height: 32),
 
                             // 5. Timeline Section (Figma Node 10:7680)
@@ -433,9 +435,10 @@ class _DentalRecordsScreenState extends State<DentalRecordsScreen> {
   // 4. Horizontal Category Chips (Figma Node 10:7669)
   // Height: 38px, Dental is Active (#006971)
   // ==========================================
-  Widget _buildCategoryChips() {
+  Widget _buildCategoryChips(Patient patient) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
       child: Row(
         children: List.generate(_categories.length, (index) {
           final isSelected = _selectedCategoryIndex == index;
@@ -447,18 +450,40 @@ class _DentalRecordsScreenState extends State<DentalRecordsScreen> {
             ),
             child: GestureDetector(
               onTap: () {
-                if (index == 0 || index == 1) {
-                  // Navigate to Medical Records Timeline
+                if (title == 'All Records' || title == 'Medical') {
+                  if (_isNavigating) return;
+                  _isNavigating = true;
                   Navigator.pushReplacementNamed(
                     context,
                     AppRoutes.medicalRecords,
+                    arguments: patient,
                   );
-                } else if (index == 3) {
-                  // Navigate to Vision Records
+                } else if (title == 'Dental') {
+                  setState(() {
+                    _selectedCategoryIndex = index;
+                  });
+                } else if (title == 'Vision') {
+                  if (_isNavigating) return;
+                  _isNavigating = true;
                   Navigator.pushReplacementNamed(
                     context,
                     AppRoutes.visionRecords,
+                    arguments: patient,
                   );
+                } else if (title == 'PET') {
+                  if (_isNavigating) return;
+                  _isNavigating = true;
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.petRecords,
+                    arguments: patient,
+                  ).then((_) {
+                    if (mounted) {
+                      setState(() {
+                        _isNavigating = false;
+                      });
+                    }
+                  });
                 } else {
                   setState(() {
                     _selectedCategoryIndex = index;
@@ -467,9 +492,9 @@ class _DentalRecordsScreenState extends State<DentalRecordsScreen> {
               },
               behavior: HitTestBehavior.opaque,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSelected ? 20 : 21,
+                  vertical: 9,
                 ),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF006971) : Colors.white,
@@ -497,10 +522,11 @@ class _DentalRecordsScreenState extends State<DentalRecordsScreen> {
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      letterSpacing: 0.1,
                       color: isSelected
                           ? Colors.white
                           : const Color(0xFF494552),
+                      letterSpacing: 0.1,
+                      height: 1.42,
                     ),
                   ),
                 ),

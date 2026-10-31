@@ -40,6 +40,10 @@ void main() {
           appBar: AppBar(title: const Text('Appointments Page')),
           body: const Text('Appointments Body'),
         ),
+        AppRoutes.petRecords: (context) => Scaffold(
+          appBar: AppBar(title: const Text('Companion Health (Pet CareID)')),
+          body: const Text('Pet Records Body'),
+        ),
       },
       home: DentalRecordsScreen(patientArg: patientArg),
     );
@@ -170,6 +174,30 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Medical Records Page'), findsOneWidget);
+    });
+
+    testWidgets('Tapping PET button navigates to Pet Records screen', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(440, 1800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.text('PET'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('PET'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('PET'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Companion Health (Pet CareID)'), findsOneWidget);
     });
   });
 }
