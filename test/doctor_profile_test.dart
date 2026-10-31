@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:careid_doctor/features/profile_settings/doctor_profile_screen.dart';
+import 'package:careid_doctor/features/profile_settings/professional_credentials_screen.dart';
 import 'package:careid_doctor/core/routes/app_routes.dart';
 
 void main() {
@@ -135,10 +136,103 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Tap Account Settings
-      await tester.tap(find.text('Account Settings'));
+      // Tap Professional Info
+      await tester.tap(find.text('Professional Info'));
       await tester.pumpAndSettle();
-      expect(find.text('Settings Hub Screen'), findsOneWidget);
+      expect(find.text('Professional Credentials Screen'), findsOneWidget);
+    });
+
+    testWidgets(
+      'Full flow: Doctor Profile -> Tap Professional Info -> Professional Credentials Screen -> Back',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(427, 2200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(
+          MaterialApp(
+            initialRoute: AppRoutes.doctorProfile,
+            routes: {
+              AppRoutes.doctorProfile: (context) => const DoctorProfileScreen(),
+              AppRoutes.professionalCredentials: (context) =>
+                  const ProfessionalCredentialsScreen(),
+              AppRoutes.dashboard: (context) =>
+                  const Scaffold(body: Text('Dashboard Screen')),
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // On Doctor Profile screen
+        expect(find.text('Dr. Richard  Malouf'), findsOneWidget);
+        expect(find.text('Professional Info'), findsOneWidget);
+
+        // Tap Professional Info
+        await tester.tap(find.text('Professional Info'));
+        await tester.pumpAndSettle();
+
+        // Now on Professional Credentials screen
+        expect(find.text('Professional Credentials'), findsOneWidget);
+        expect(find.text('DEA License'), findsOneWidget);
+        expect(find.text('Identity Verification'), findsOneWidget);
+
+        // Tap Back button on Professional Credentials screen
+        await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+        await tester.pumpAndSettle();
+
+        // Returned to Doctor Profile screen
+        expect(find.text('Dr. Richard  Malouf'), findsOneWidget);
+        expect(find.text('Professional Info'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Full flow: Doctor Profile -> Tap Professional Info -> Professional Credentials Screen -> Back', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(427, 2200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          initialRoute: AppRoutes.doctorProfile,
+          routes: {
+            AppRoutes.doctorProfile: (context) => const DoctorProfileScreen(),
+            AppRoutes.professionalCredentials: (context) =>
+                const ProfessionalCredentialsScreen(),
+            AppRoutes.dashboard: (context) =>
+                const Scaffold(body: Text('Dashboard Screen')),
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // On Doctor Profile screen
+      expect(find.text('Dr. Richard  Malouf'), findsOneWidget);
+      expect(find.text('Professional Info'), findsOneWidget);
+
+      // Tap Professional Info
+      await tester.tap(find.text('Professional Info'));
+      await tester.pumpAndSettle();
+
+      // Now on Professional Credentials screen
+      expect(find.text('Professional Credentials'), findsOneWidget);
+      expect(find.text('DEA License'), findsOneWidget);
+      expect(find.text('Identity Verification'), findsOneWidget);
+
+      // Tap Back button on Professional Credentials screen
+      await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      await tester.pumpAndSettle();
+
+      // Returned to Doctor Profile screen
+      expect(find.text('Dr. Richard  Malouf'), findsOneWidget);
+      expect(find.text('Professional Info'), findsOneWidget);
     });
 
     testWidgets('Tapping Action CTA buttons triggers navigation', (

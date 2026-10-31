@@ -74,7 +74,13 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                       const SizedBox(height: 24),
 
                       // Card 2: Settings Navigation (Node 10:3037)
-                      _buildSettingsNavCard(context),
+                      _buildSettingsNavCard(
+                        context,
+                        doctorName: doctorName,
+                        specialty: specialty,
+                        licenseNumber: licenseNumber,
+                        hospitalName: hospitalName,
+                      ),
                       const SizedBox(height: 12),
 
                       // Version string (Node 10:3095)
@@ -84,6 +90,8 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                       // Card 3: Detail Views — Professional Information (Node 10:3098)
                       _buildProfessionalInfoCard(
                         context,
+                        doctorName: doctorName,
+                        specialty: specialty,
                         licenseNumber: licenseNumber,
                         hospitalName: hospitalName,
                       ),
@@ -567,7 +575,13 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   // 5 rows separated by 1px #E1E3E4 dividers
   // Row 1: Professional Info (Selected state with purple left border)
   // ==========================================
-  Widget _buildSettingsNavCard(BuildContext context) {
+  Widget _buildSettingsNavCard(
+    BuildContext context, {
+    required String doctorName,
+    required String specialty,
+    required String licenseNumber,
+    required String hospitalName,
+  }) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -594,6 +608,16 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
             subtitle: 'Credentials & affiliations',
             onTap: () {
               setState(() => _selectedMenuIndex = 0);
+              Navigator.pushNamed(
+                context,
+                AppRoutes.professionalCredentials,
+                arguments: {
+                  'doctorName': doctorName,
+                  'specialty': specialty,
+                  'licenseNumber': licenseNumber,
+                  'hospitalName': hospitalName,
+                },
+              );
             },
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE1E3E4)),
@@ -773,6 +797,8 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   // ==========================================
   Widget _buildProfessionalInfoCard(
     BuildContext context, {
+    required String doctorName,
+    required String specialty,
     required String licenseNumber,
     required String hospitalName,
   }) {
@@ -987,7 +1013,16 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
           // Subsection 3: More information Gradient Button (Node 10:3131, 10:3132)
           GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context, AppRoutes.professionalCredentials);
+              Navigator.pushNamed(
+                context,
+                AppRoutes.professionalCredentials,
+                arguments: {
+                  'doctorName': doctorName,
+                  'specialty': specialty,
+                  'licenseNumber': licenseNumber,
+                  'hospitalName': hospitalName,
+                },
+              );
             },
             behavior: HitTestBehavior.opaque,
             child: Container(
