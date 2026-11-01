@@ -35,6 +35,13 @@ class _DoctorNotificationCenterScreenState
         title: const Text('Clinical Notifications'),
         actions: [
           IconButton(
+            key: const Key('notification_preferences_button'),
+            icon: const Icon(Icons.tune_rounded),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.notificationPreferences),
+            tooltip: 'Notification Preferences',
+          ),
+          IconButton(
             icon: const Icon(Icons.chat_bubble_outline_rounded),
             onPressed: () =>
                 Navigator.pushNamed(context, AppRoutes.patientMessages),
@@ -50,17 +57,20 @@ class _DoctorNotificationCenterScreenState
               // Filter Chips
               Padding(
                 padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    _buildFilterChip(
-                      'All Alerts (${MockData.alerts.length})',
-                      0,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Critical (1)', 1),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Updates (2)', 2),
-                  ],
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterChip(
+                        'All Alerts (${MockData.alerts.length})',
+                        0,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Critical (1)', 1),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Updates (2)', 2),
+                    ],
+                  ),
                 ),
               ),
 
